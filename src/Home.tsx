@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import Layout from "./dashboard/layout/Layout";
 import { useNavigate } from "react-router-dom";
-import { clearCookie, getCookie, setCookie } from "./utils/cookieUtils";
+import { getCookie, setCookie } from "./utils/cookieUtils";
 
 interface FormData {
   email: string;
@@ -27,7 +27,7 @@ interface WalletAuthProps {
 // Add cookie utility functions
 
 const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -36,36 +36,6 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
     password: "",
     username: "",
   });
-
-  useEffect(() => {
-    // Check for existing auth token on component mount
-    const token = getCookie("auth_token");
-    if (token) {
-      validateToken(token);
-    }
-  }, []);
-
-  const validateToken = async (token: string): Promise<void> => {
-    try {
-      const response = await fetch(`api/validate-token`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        onAuthenticated(true);
-         navigate("/dashboard");
-      } else {
-        clearCookie("auth_token");
-      }
-    } catch (err) {
-      clearCookie("auth_token");
-      console.error("Token validation error:", err);
-    }
-  };
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
@@ -83,8 +53,23 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
         },
         body: JSON.stringify(formData),
       });
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          // Try to parse error message as JSON
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || "Authentication failed");
+        } catch (parseError) {
+          // If parsing fails, use the raw error text or a default message
+          throw new Error(errorText || "Authentication failed");
+        }
+      }
+      const responseText = await response.text();
+      if (!responseText) {
+        throw new Error("Empty response from server");
+      }
 
-      const data: AuthResponse = await response.json();
+      const data: AuthResponse = JSON.parse(responseText);
 
       if (!response.ok) {
         throw new Error(data.message || "Authentication failed");
@@ -98,14 +83,13 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
         "user_data",
         JSON.stringify({
           email: data.user.email,
-          username: data.user.username ,
+          username: data.user.username,
         }),
         7
       );
 
       onAuthenticated(true);
-          navigate("/dashboard");
-
+      navigate("/dashboard");
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || "An error occurred. Please try again.");
