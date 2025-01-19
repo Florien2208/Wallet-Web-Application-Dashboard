@@ -1,14 +1,13 @@
 // src/components/layout/Sidebar.tsx
 import React from "react";
 import {
-
   DollarSign,
- 
   Menu,
   LayoutDashboard,
   Tags,
   PieChart,
   FileText,
+  LogOut,
 } from "lucide-react";
 import { MenuItem } from "../../types";
 
@@ -20,13 +19,11 @@ interface SidebarProps {
 }
 
 export const menuItems: MenuItem[] = [
-  
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'transactions', icon: DollarSign, label: 'Transactions' },
-    { id: 'categories', icon: Tags, label: 'Categories' },
-    { id: 'budgets', icon: PieChart, label: 'Budgets' },
-    { id: 'reports', icon: FileText, label: 'Reports' },
-
+  { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { id: "transactions", icon: DollarSign, label: "Transactions" },
+  { id: "categories", icon: Tags, label: "Categories" },
+  { id: "budgets", icon: PieChart, label: "Budgets" },
+  { id: "reports", icon: FileText, label: "Reports" },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -35,6 +32,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const handleLogout = () => {
+    // Clear cookies
+    document.cookie =
+      "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    document.cookie = "user_data=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    // Refresh the page or redirect to login
+    window.location.reload();
+  };
   return (
     <div
       className={`fixed top-0 left-0 h-full bg-gray-900 text-white transition-all duration-300 ${
@@ -63,6 +68,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             {isSidebarOpen && <span className="ml-4">{item.label}</span>}
           </div>
         ))}
+        <div className="flex items-center">
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center px-4 py-2 text-red-600 hover:text-red-700"
+          >
+            <LogOut
+              className={`w-5 h-5 mr-2${isSidebarOpen ? "hidden" : "hidden"} `}
+            />
+
+            {isSidebarOpen && <span className="ml-4">Logout</span>}
+          </button>
+        </div>
       </div>
     </div>
   );

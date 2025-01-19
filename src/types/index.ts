@@ -51,6 +51,7 @@ export interface MenuItem {
   id: string;
   label: string;
   icon: React.ElementType;
+  // path: string;
 }
 export type AccountType = "BANK" | "MOBILE" | "CASH";
 export type TransactionType = "INCOME" | "EXPENSE";
