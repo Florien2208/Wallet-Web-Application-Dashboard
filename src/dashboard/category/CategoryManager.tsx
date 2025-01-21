@@ -41,7 +41,9 @@ const CategoryManager: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("/api/v1/categories");
+      const response = await axios.get(
+        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/categories"
+      );
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories", error);
@@ -53,7 +55,10 @@ const CategoryManager: React.FC = () => {
     parentId: number | undefined;
   }) => {
     try {
-      const response = await axios.post("/api/v1/categories", category);
+      const response = await axios.post(
+        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/categories",
+        category
+      );
       setCategories([...categories, response.data]);
     } catch (error) {
       throw new Error("Failed to add category");

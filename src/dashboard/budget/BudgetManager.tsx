@@ -67,12 +67,15 @@ const BudgetManager: React.FC = () => {
   const fetchBudgets = async (): Promise<void> => {
     try {
       const token = getCookie("auth_token");
-      const response = await fetch("/api/v1/budgets", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/budgets",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -105,14 +108,17 @@ const BudgetManager: React.FC = () => {
   const handleAddBudget = async (budget: NewBudget): Promise<void> => {
     try {
       const token = getCookie("auth_token");
-      const response = await fetch("/api/v1/budgets", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(budget),
-      });
+      const response = await fetch(
+        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/budgets",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(budget),
+        }
+      );
 
       if (response.ok) {
         setNotification({

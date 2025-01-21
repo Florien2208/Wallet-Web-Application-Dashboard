@@ -11,7 +11,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": "https://wallet-web-application-dashboard-backend.onrender.com/",
+      "/api": "https://wallet-web-application-dashboard-backend.onrender.com",
     },
   },
 });

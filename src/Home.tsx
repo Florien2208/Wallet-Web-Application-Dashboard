@@ -50,13 +50,16 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
 
     try {
       const endpoint = isLogin ? "/login" : "/register";
-      const response = await fetch(`/api/v1/auth${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `https://wallet-web-application-dashboard-backend.onrender.com/api/v1/auth${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       // First check if response exists
       if (!response) {
