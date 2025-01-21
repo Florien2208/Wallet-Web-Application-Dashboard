@@ -9,6 +9,7 @@ import { useDashboard } from "../layout/DashboardContext";
 import { Plus } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getCookie } from "@/utils/cookieUtils";
+import { BASE_URL } from "@/constans/constant";
 
 // Define interfaces for type safety
 interface Budget {
@@ -68,7 +69,7 @@ const BudgetManager: React.FC = () => {
     try {
       const token = getCookie("auth_token");
       const response = await fetch(
-        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/budgets",
+        `${BASE_URL}/api/v1/budgets`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -109,7 +110,7 @@ const BudgetManager: React.FC = () => {
     try {
       const token = getCookie("auth_token");
       const response = await fetch(
-        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/budgets",
+        `${BASE_URL}/api/v1/budgets`,
         {
           method: "POST",
           headers: {

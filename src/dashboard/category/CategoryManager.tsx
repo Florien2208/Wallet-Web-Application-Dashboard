@@ -10,6 +10,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { getCookie } from "@/utils/cookieUtils";
+import { BASE_URL } from "@/constans/constant";
 
 // Add axios interceptor to include token in headers
 axios.interceptors.request.use((config) => {
@@ -41,9 +42,7 @@ const CategoryManager: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(
-        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/categories"
-      );
+      const response = await axios.get(`${BASE_URL}/api/v1/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories", error);
@@ -56,7 +55,7 @@ const CategoryManager: React.FC = () => {
   }) => {
     try {
       const response = await axios.post(
-        "https://wallet-web-application-dashboard-backend.onrender.com/api/v1/categories",
+        `${BASE_URL}/api/v1/categories`,
         category
       );
       setCategories([...categories, response.data]);
@@ -88,7 +87,6 @@ const CategoryManager: React.FC = () => {
   };
 
   // Helper function to get subcategories
-
 
   return (
     <div className="p-6">
@@ -153,13 +151,11 @@ const CategoryManager: React.FC = () => {
               </label>
               <select
                 value={newCategory.parentId || ""}
-              
                 onChange={(e) => {
                   const target = e.target as HTMLInputElement;
                   setNewCategory((prev) => ({
                     ...prev,
-                    parentId: target.value? Number(target.value)
-                      : undefined,
+                    parentId: target.value ? Number(target.value) : undefined,
                   }));
                 }}
                 className="w-full p-2 border rounded-md"
@@ -198,7 +194,6 @@ const CategoryManager: React.FC = () => {
         {categories
           .filter((c) => !c.parentId)
           .map((category) => {
-            
             return (
               <div
                 key={category.id}

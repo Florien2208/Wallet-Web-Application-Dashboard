@@ -3,6 +3,7 @@ import { Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import Layout from "./dashboard/layout/Layout";
 import { useNavigate } from "react-router-dom";
 import {  getCookie, setCookie } from "./utils/cookieUtils";
+import { BASE_URL } from "./constans/constant";
 
 interface FormData {
   email: string;
@@ -50,22 +51,19 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
 
     try {
       const endpoint = isLogin ? "/login" : "/register";
-      const response = await fetch(
-        `https://wallet-web-application-dashboard-backend.onrender.com/api/v1/auth${endpoint}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/api/v1/auth${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
       // First check if response exists
       if (!response) {
         throw new Error("No response received from server");
       }
-console.log("response",response)
+
       // Read the response text first
       const responseText = await response.text();
 
