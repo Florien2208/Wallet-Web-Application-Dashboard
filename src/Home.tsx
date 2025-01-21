@@ -65,7 +65,7 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
       if (!response) {
         throw new Error("No response received from server");
       }
-
+console.log("response",response)
       // Read the response text first
       const responseText = await response.text();
 
