@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { X } from "lucide-react";
-import { Category,  TransactionType } from "../../types";
+import { Category, TransactionType, Account, Transaction } from "../../types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { getCookie } from "@/utils/cookieUtils";
@@ -8,6 +8,9 @@ import { BASE_URL } from "@/constans/constant";
 
 interface AddTransactionModalProps {
   onClose: () => void;
+  onAdd: (transaction: Omit<Transaction, "id">) => void;
+  accounts: Account[];
+  categories: Category[];
 }
 
 interface FormData {
@@ -22,6 +25,9 @@ interface FormData {
 
 const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onClose,
+  onAdd,
+  accounts,
+  categories: initialCategories,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     amount: "",
@@ -33,8 +39,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     type: "expense",
   });
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
+  const [categories] = useState<Category[]>(initialCategories);
+  const [subCategories, setSubCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
@@ -42,37 +48,10 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   } | null>(null);
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
     if (formData.categoryId) {
       fetchSubCategories(formData.categoryId);
     }
   }, [formData.categoryId]);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/api/v1/categories`, {
-        headers: {
-          Authorization: `Bearer ${getCookie("auth_token")}`,
-        },
-      });
-      setCategories(response.data);
-      if (response.data.length === 0) {
-        setNotification({
-          type: "error",
-          message: "No categories found. Please create a category first.",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch categories", error);
-      setNotification({
-        type: "error",
-        message: "Failed to fetch categories. Please try again.",
-      });
-    }
-  };
 
   const fetchSubCategories = async (categoryId: string) => {
     try {
@@ -118,11 +97,16 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
     try {
       setIsSubmitting(true);
-      await axios.post(`${BASE_URL}/api/v1/transactions`, transactionData, {
-        headers: {
-          Authorization: `Bearer ${getCookie("auth_token")}`,
-        },
-      });
+      const response = await axios.post(
+        `${BASE_URL}/api/v1/transactions`,
+        transactionData,
+        {
+          headers: {
+            Authorization: `Bearer ${getCookie("auth_token")}`,
+          },
+        }
+      );
+      onAdd(response.data);
       setNotification({
         type: "success",
         message: "Transaction added successfully!",
@@ -131,6 +115,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         setNotification(null);
         onClose();
       }, 2000);
+      
     } catch (error) {
       console.error("Failed to add transaction", error);
       setNotification({
@@ -271,9 +256,11 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               required
               disabled={isSubmitting}
             >
-              <option value="bank">Bank Account</option>
-              <option value="mobile_money">Mobile Money</option>
-              <option value="cash">Cash</option>
+              {accounts.map((account) => (
+                <option key={account.id} value={account.type.toLowerCase()}>
+                  {account.name}
+                </option>
+              ))}
             </select>
           </div>
 

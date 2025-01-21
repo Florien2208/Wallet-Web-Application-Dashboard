@@ -110,7 +110,7 @@ const TransactionList: React.FC<TransactionListProps> = () => {
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b">
-        <div className="">
+        <div className="relative">
           <input
             type="text"
             placeholder="Search transactions..."

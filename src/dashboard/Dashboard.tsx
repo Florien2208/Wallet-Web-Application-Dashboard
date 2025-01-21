@@ -4,10 +4,27 @@ import AccountCard from "./component/AccountCard";
 import CashFlowChart from "./component/CashFlowChart";
 import TransactionList from "./component/TransactionList";
 import { useDashboard } from "./layout/DashboardContext";
+import { Transaction } from "@/types";
 
 
 const Dashboard: React.FC = () => {
   const { accounts, transactions, categories } = useDashboard();
+
+  // Transform the transactions to match the required format
+  const transformedTransactions: Transaction[] = transactions.map(
+    (transaction) => ({
+      ...transaction,
+      _id: transaction.id.toString(),
+      category: {
+        ...categories.find((cat) => cat.id === transaction.categoryId)!,
+        _id: categories
+          .find((cat) => cat.id === transaction.categoryId)!
+          .id.toString(),
+      },
+      account:
+        accounts.find((acc) => acc.id === transaction.accountId)?.name || "",
+    })
+  );
 
   // Calculate total balance across all accounts
   const totalBalance = accounts.reduce(
@@ -27,17 +44,12 @@ const Dashboard: React.FC = () => {
   });
 
   const monthlyIncome = monthlyTransactions
-    .filter((t) => t.type === "INCOME")
+    .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
 
   const monthlyExpenses = monthlyTransactions
-    .filter((t) => t.type === "EXPENSE")
+    .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-  // Get recent transactions
-  const recentTransactions = [...transactions]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -115,11 +127,7 @@ const Dashboard: React.FC = () => {
         <div className="p-4 border-b">
           <h2 className="text-xl font-bold">Recent Transactions</h2>
         </div>
-        <TransactionList
-          transactions={recentTransactions}
-          accounts={accounts}
-          categories={categories}
-        />
+        <TransactionList transactions={transformedTransactions} />
       </div>
     </div>
   );

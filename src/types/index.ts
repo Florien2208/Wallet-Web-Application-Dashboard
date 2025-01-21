@@ -6,24 +6,35 @@ export interface Account {
   type: "BANK" | "MOBILE" | "CASH";
 }
 
+// First, let's update the Category interface to make _id required
 export interface Category {
   id: number;
-  _id?:string;
+  _id: string;  // Removed the optional marker (?)
   name: string;
   parentId?: number;
   subCategories?: Category[];
 }
 
+// Then update the Transaction interface to include the full references
 export interface Transaction {
   id: number;
+  _id: string;
   amount: number;
   description: string;
   categoryId: number;
+  category: Category;  // This will now have a required _id field
   date: string;
   accountId: number;
-  type: "INCOME" | "EXPENSE";
+  account: string;
+  type: "income" | "expense";
 }
 
+// For completeness, let's define the TransactionListProps
+export interface TransactionListProps {
+  transactions: Transaction[];
+  accounts: Account[];
+  categories: Category[];
+}
 export interface Budget {
   id: number;
   categoryId: number;

@@ -90,7 +90,7 @@ export const DashboardProvider: React.FC<{ children: React.ReactNode }> = ({
         transaction.date <= b.endDate
     );
 
-    if (relevantBudget && transaction.type === "EXPENSE") {
+    if (relevantBudget && transaction.type === "expense") {
       const updatedBudget = {
         ...relevantBudget,
         spent: relevantBudget.spent + Math.abs(transaction.amount),
