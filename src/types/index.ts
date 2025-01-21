@@ -55,4 +55,4 @@ export interface MenuItem {
   path: string;
 }
 export type AccountType = "bank" | "mobile_money" | "cash";
-export type TransactionType = "INCOME" | "EXPENSE";
+export type TransactionType = "income" | "expense";

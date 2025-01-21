@@ -1,14 +1,12 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { X } from "lucide-react";
-import { Account, Category, Transaction, TransactionType } from "../../types";
+import { Category,  TransactionType } from "../../types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { getCookie } from "@/utils/cookieUtils";
+import { BASE_URL } from "@/constans/constant";
 
 interface AddTransactionModalProps {
-  accounts: Account[];
-  categories: Category[];
-  onAdd: (transaction: Omit<Transaction, "id">) => void;
   onClose: () => void;
 }
 
@@ -16,92 +14,111 @@ interface FormData {
   amount: string;
   description: string;
   categoryId: string;
+  subCategoryId: string;
   date: string;
-  accountId: string;
+  account: "bank" | "mobile_money" | "cash";
   type: TransactionType;
 }
 
 const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
-  accounts,
-  
-
   onClose,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     amount: "",
     description: "",
     categoryId: "",
+    subCategoryId: "",
     date: new Date().toISOString().split("T")[0],
-    accountId: "",
-    type: "EXPENSE",
+    account: "bank",
+    type: "expense",
   });
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-   const [categories, setCategories] = useState<Category[]>([]);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
-   useEffect(() => {
-     fetchCategories();
-   }, []);
-console.log("categories",categories)
-   const fetchCategories = async () => {
-     try {
-       const response = await axios.get("/api/v1/categories", {
-         headers: {
-           Authorization: `Bearer ${getCookie("auth_token")}`,
-         },
-       });
-       console.log("response", response);
-       setCategories(response.data);
-       if (response.data.length === 0) {
-         setNotification({
-           type: "error",
-           message: "No categories found. Please create a category first.",
-         });
-       }
-     } catch (error) {
-       console.error("Failed to fetch categories", error);
-       setNotification({
-         type: "error",
-         message: "Failed to fetch categories. Please try again.",
-       });
-     }
-   };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (formData.categoryId) {
+      fetchSubCategories(formData.categoryId);
+    }
+  }, [formData.categoryId]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/v1/categories`, {
+        headers: {
+          Authorization: `Bearer ${getCookie("auth_token")}`,
+        },
+      });
+      setCategories(response.data);
+      if (response.data.length === 0) {
+        setNotification({
+          type: "error",
+          message: "No categories found. Please create a category first.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+      setNotification({
+        type: "error",
+        message: "Failed to fetch categories. Please try again.",
+      });
+    }
+  };
+
+  const fetchSubCategories = async (categoryId: string) => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/v1/categories/${categoryId}/subcategories`,
+        {
+          headers: {
+            Authorization: `Bearer ${getCookie("auth_token")}`,
+          },
+        }
+      );
+      setSubCategories(response.data);
+    } catch (error) {
+      console.error("Failed to fetch subcategories", error);
+    }
+  };
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const target = e.target as HTMLInputElement | HTMLSelectElement;
+    const { name, value } = e.target as HTMLInputElement | HTMLSelectElement;
     setFormData((prev) => ({
       ...prev,
-      [target.name]: target.value,
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.amount || !formData.categoryId || !formData.accountId) {
+    if (!formData.amount || !formData.categoryId || !formData.account) {
       return;
     }
 
     const transactionData = {
-      amount:
-        formData.type === "EXPENSE"
-          ? -Number(formData.amount)
-          : Number(formData.amount),
+      amount: Number(formData.amount),
       description: formData.description,
-      categoryId: String(formData.categoryId),
+      categoryId: formData.categoryId,
+      subCategoryId: formData.subCategoryId || undefined,
       date: formData.date,
-      accountId: Number(formData.accountId),
+      account: formData.account,
       type: formData.type,
     };
-console.log("transactionData", transactionData);
+
     try {
       setIsSubmitting(true);
-      await axios.post("/api/v1/transactions", transactionData, {
+      await axios.post(`${BASE_URL}/api/v1/transactions`, transactionData, {
         headers: {
           Authorization: `Bearer ${getCookie("auth_token")}`,
         },
@@ -110,27 +127,21 @@ console.log("transactionData", transactionData);
         type: "success",
         message: "Transaction added successfully!",
       });
-      // Clear notification after 3 seconds
-      setTimeout(() => setNotification(null), 3000);
-      setIsSubmitting(false);
+      setTimeout(() => {
+        setNotification(null);
+        onClose();
+      }, 2000);
     } catch (error) {
       console.error("Failed to add transaction", error);
       setNotification({
         type: "error",
         message: "Failed to add transaction. Please try again.",
       });
-      // Clear error notification after 3 seconds
       setTimeout(() => setNotification(null), 3000);
+    } finally {
       setIsSubmitting(false);
     }
-
-
-  
-    
   };
-
-
-  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -176,8 +187,8 @@ console.log("transactionData", transactionData);
                 required
                 disabled={isSubmitting}
               >
-                <option value="EXPENSE">Expense</option>
-                <option value="INCOME">Income</option>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
               </select>
             </div>
             <div className="flex-1">
@@ -222,29 +233,47 @@ console.log("transactionData", transactionData);
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
-                <option key={category.id} value={category._id}>
+                <option key={category._id} value={category._id}>
                   {category.name}
                 </option>
               ))}
             </select>
           </div>
 
+          {subCategories.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Subcategory (Optional)
+              </label>
+              <select
+                name="subCategoryId"
+                value={formData.subCategoryId}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Select a subcategory</option>
+                {subCategories.map((subCategory) => (
+                  <option key={subCategory._id} value={subCategory._id}>
+                    {subCategory.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">Account</label>
             <select
-              name="accountId"
-              value={formData.accountId}
+              name="account"
+              value={formData.account}
               onChange={handleInputChange}
               className="w-full p-2 border rounded"
               required
               disabled={isSubmitting}
             >
-              <option value="">Select Account</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name} (${account.balance.toLocaleString()})
-                </option>
-              ))}
+              <option value="bank">Bank Account</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="cash">Cash</option>
             </select>
           </div>
 
