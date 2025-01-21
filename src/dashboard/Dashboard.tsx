@@ -1,22 +1,14 @@
 import React from "react";
 import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
-
-import { Account, Transaction, Category } from "../types";
 import AccountCard from "./component/AccountCard";
 import CashFlowChart from "./component/CashFlowChart";
 import TransactionList from "./component/TransactionList";
+import { useDashboard } from "./layout/DashboardContext";
 
-interface DashboardProps {
-  accounts: Account[];
-  transactions: Transaction[];
-  categories: Category[];
-}
 
-const Dashboard: React.FC<DashboardProps> = ({
-  accounts,
-  transactions,
-  categories,
-}) => {
+const Dashboard: React.FC = () => {
+  const { accounts, transactions, categories } = useDashboard();
+
   // Calculate total balance across all accounts
   const totalBalance = accounts.reduce(
     (sum, account) => sum + account.balance,
@@ -49,7 +41,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
@@ -103,14 +94,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* Accounts Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {accounts.map((account) => (
           <AccountCard key={account.id} account={account} />
         ))}
       </div>
 
-      {/* Cash Flow Chart */}
       <CashFlowChart
         data={[
           { name: "Jan", income: 4000, expenses: 2400 },
@@ -122,7 +111,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         ]}
       />
 
-      {/* Recent Transactions */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b">
           <h2 className="text-xl font-bold">Recent Transactions</h2>

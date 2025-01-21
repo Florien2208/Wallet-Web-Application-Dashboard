@@ -8,6 +8,7 @@ export interface Account {
 
 export interface Category {
   id: number;
+  _id?:string;
   name: string;
   parentId?: number;
   subCategories?: Category[];
@@ -51,7 +52,7 @@ export interface MenuItem {
   id: string;
   label: string;
   icon: React.ElementType;
-  // path: string;
+  path: string;
 }
-export type AccountType = "BANK" | "MOBILE" | "CASH";
+export type AccountType = "bank" | "mobile_money" | "cash";
 export type TransactionType = "INCOME" | "EXPENSE";

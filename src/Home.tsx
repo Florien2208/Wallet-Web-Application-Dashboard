@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import Layout from "./dashboard/layout/Layout";
 import { useNavigate } from "react-router-dom";
-import { getCookie, setCookie } from "./utils/cookieUtils";
+import {  getCookie, setCookie } from "./utils/cookieUtils";
 
 interface FormData {
   email: string;
@@ -27,7 +27,7 @@ interface WalletAuthProps {
 // Add cookie utility functions
 
 const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -37,108 +37,69 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
     username: "",
   });
 
-const handleSubmit = async (
-  e: React.FormEvent<HTMLFormElement>
-): Promise<void> => {
-  e.preventDefault();
-  setError("");
-  setIsLoading(true);
+  
 
-  try {
-    const endpoint = isLogin ? "/login" : "/register";
-    const url = `/api/v1/auth${endpoint}`;
-    console.log("Sending request to:", url);
+  
 
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(formData),
-      signal: controller.signal,
-    });
-
-    // Clear timeout since we got a response
-    clearTimeout(timeoutId);
-
-    console.log("Response status:", response.status);
-    console.log(
-      "Response headers:",
-      Object.fromEntries(response.headers.entries())
-    );
-
-    const responseText = await response.text();
-    console.log("Raw response:", responseText);
-
-    if (!responseText) {
-      if (response.ok) {
-        const defaultResponse: AuthResponse = {
-          token:
-            response.headers.get("authorization") ||
-            response.headers.get("x-auth-token") ||
-            "default-token",
-          user: {
-            email: formData.email,
-            username: formData.username || "",
-          },
-        };
-
-        setCookie("auth_token", defaultResponse.token, 7);
-        setCookie("user_data", JSON.stringify(defaultResponse.user), 7);
-
-        onAuthenticated(true);
-        navigate("/dashboard");
-        return;
-      } else {
-        throw new Error(
-          `Server returned ${response.status} with no response body`
-        );
-      }
-    }
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const data: AuthResponse = JSON.parse(responseText);
+      const endpoint = isLogin ? "/login" : "/register";
+      const response = await fetch(`/api/v1/auth${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+if (!response.ok) {
+  const errorText = await response.text();
+  try {
+    // Try to parse error message as JSON
+    const errorData = JSON.parse(errorText);
+    throw new Error(errorData.message || "Authentication failed");
+  } catch (parseError) {
+    // If parsing fails, use the raw error text or a default message
+    throw new Error(errorText || "Authentication failed");
+  }
+}
+      const data: AuthResponse = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.message || "Authentication failed");
+      }
+
+      // Store token in cookie (expires in 7 days)
       setCookie("auth_token", data.token, 7);
 
-      if (data.user) {
-        setCookie(
-          "user_data",
-          JSON.stringify({
-            email: data.user.email,
-            username: data.user.username,
-          }),
-          7
-        );
-      }
+      // Store user data in cookie if needed
+      setCookie(
+        "user_data",
+        JSON.stringify({
+          email: data.user.email,
+          username: data.user.username ,
+        }),
+        7
+      );
 
       onAuthenticated(true);
-      navigate("/dashboard");
-    } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-      throw new Error(`Invalid JSON response: ${responseText}`);
-    }
-  } catch (err) {
-    console.error("Authentication error:", err);
-    if (err instanceof Error) {
-      // Check specifically for timeout
-      if (err.name === "AbortError") {
-        setError("Request timed out after 10 seconds. Please try again.");
+          navigate("/dashboard");
+
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "An error occurred. Please try again.");
       } else {
-        setError(err.message);
+        setError("An error occurred. Please try again.");
       }
-    } else {
-      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const target = e.target as HTMLInputElement; // Type assertion

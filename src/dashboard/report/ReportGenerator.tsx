@@ -1,6 +1,4 @@
-// src/components/reports/ReportGenerator.tsx
 import React, { useState } from "react";
-import { Report, Transaction } from "../../types";
 import {
   LineChart,
   Line,
@@ -9,20 +7,52 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-
 } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface ReportGeneratorProps {
-  transactions: Transaction[];
+interface Transaction {
+  id: string;
+  date: string;
+  amount: number;
+  type: "INCOME" | "EXPENSE";
+  categoryId: string;
+  description?: string;
 }
 
-const ReportGenerator: React.FC<ReportGeneratorProps> = ({ transactions }) => {
+interface Report {
+  startDate: string;
+  endDate: string;
+  transactions: Transaction[];
+  totalIncome: number;
+  totalExpenses: number;
+  categoryBreakdown: Record<string, number>;
+}
+
+const ReportGenerator = () => {
   const [dateRange, setDateRange] = useState({
     startDate: "",
     endDate: "",
   });
+  const [currentReport, setCurrentReport] = useState<Report | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const generateReport = (): Report => {
+  // Simulating data fetch - replace with your actual data fetching logic
+  React.useEffect(() => {
+    // Replace this with your actual API call
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch("/api/transactions");
+        const data = await response.json();
+        setTransactions(data);
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  const generateReport = (): void => {
     const filteredTransactions = transactions.filter(
       (t) => t.date >= dateRange.startDate && t.date <= dateRange.endDate
     );
@@ -32,7 +62,7 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ transactions }) => {
       return acc;
     }, {} as Record<string, number>);
 
-    return {
+    const report: Report = {
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
       transactions: filteredTransactions,
@@ -44,102 +74,120 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ transactions }) => {
         .reduce((sum, t) => sum + Math.abs(t.amount), 0),
       categoryBreakdown,
     };
+
+    setCurrentReport(report);
   };
 
-  const [currentReport, setCurrentReport] = useState<Report | null>(null);
-
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-bold mb-4">Report Generator</h2>
-      <div className="space-y-4 mb-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Start Date</label>
-            <input
-              type="date"
-              value={dateRange.startDate}
-              onChange={(e) => {
-                if (e.target) {
-                  setDateRange({
-                    ...dateRange,
-                    startDate: (e.target as HTMLInputElement).value,
-                  });
-                }
-              }}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">End Date</label>
-            <input
-              type="date"
-              value={dateRange.endDate}
-              onChange={(e) => {
-                if (e.target) {
-                  setDateRange({
-                    ...dateRange,
-                    endDate: (e.target as HTMLInputElement).value,
-                  });
-                }
-              }}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        </div>
-        <button
-          onClick={() => setCurrentReport(generateReport())}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Generate Report
-        </button>
-      </div>
-
-      {currentReport && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-medium mb-2">Total Income</h3>
-              <p className="text-2xl text-green-600">
-                ${currentReport.totalIncome.toFixed(2)}
-              </p>
+    <div className="container mx-auto p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Report Generator</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={dateRange.startDate}
+                  onChange={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    setDateRange((prev) => ({
+                      ...prev,
+                      startDate: target.value,
+                    }));
+                  }}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={dateRange.endDate}
+                  onChange={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    setDateRange((prev) => ({
+                      ...prev,
+                      endDate: target.value,
+                    }));
+                  }}
+                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <h3 className="font-medium mb-2">Total Expenses</h3>
-              <p className="text-2xl text-red-600">
-                ${currentReport.totalExpenses.toFixed(2)}
-              </p>
-            </div>
+            <button
+              onClick={generateReport}
+              className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded transition-colors"
+            >
+              Generate Report
+            </button>
           </div>
 
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={currentReport.transactions}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="amount" stroke="#10B981" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="font-medium">Category Breakdown</h3>
-            {Object.entries(currentReport.categoryBreakdown).map(
-              ([category, amount]) => (
-                <div
-                  key={category}
-                  className="flex justify-between p-2 bg-gray-50 rounded"
-                >
-                  <span>{category}</span>
-                  <span>${amount.toFixed(2)}</span>
+          {currentReport && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded">
+                  <h3 className="font-medium mb-2">Total Income</h3>
+                  <p className="text-2xl text-green-600">
+                    ${currentReport.totalIncome.toFixed(2)}
+                  </p>
                 </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
+                <div className="p-4 bg-gray-50 rounded">
+                  <h3 className="font-medium mb-2">Total Expenses</h3>
+                  <p className="text-2xl text-red-600">
+                    ${currentReport.totalExpenses.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer>
+                  <LineChart data={currentReport.transactions}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#10B981"
+                      name="Transaction Amount"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-medium text-lg mb-4">Category Breakdown</h3>
+                <div className="space-y-2">
+                  {Object.entries(currentReport.categoryBreakdown).map(
+                    ([category, amount]) => (
+                      <div
+                        key={category}
+                        className="flex justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
+                      >
+                        <span className="font-medium">{category}</span>
+                        <span className="text-gray-700">
+                          ${amount.toFixed(2)}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
+
 export default ReportGenerator;

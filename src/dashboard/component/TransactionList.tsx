@@ -1,19 +1,32 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
-import { Transaction, Account, Category } from "../../types";
+import { Transaction } from "../../types";
+import { useDashboard } from "../layout/DashboardContext";
 
-interface TransactionListProps {
-  transactions: Transaction[];
-  accounts: Account[];
-  categories: Category[];
-  onDeleteTransaction?: (id: number) => void;
+interface Account {
+  id: number;
+  name: string;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({
-  transactions,
-  accounts,
-  categories,
-}) => {
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface TransactionListProps {
+  transactions?: Transaction[];
+  accounts?: Account[];
+  categories?: Category[];
+}
+
+const TransactionList: React.FC<TransactionListProps> = (props) => {
+  const contextData = useDashboard();
+
+  // Use props if provided, otherwise fall back to context
+  const transactions = props.transactions || contextData.transactions;
+  const accounts = props.accounts || contextData.accounts;
+  const categories = props.categories || contextData.categories;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof Transaction>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -67,10 +80,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
             type="text"
             placeholder="Search transactions..."
             value={searchTerm}
-            onChange={(e) => {
-              const target = e.target as HTMLInputElement;
-              setSearchTerm(target.value);
-            }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearchTerm(e.currentTarget.value)
+            }
             className="w-full pl-10 pr-4 py-2 border rounded-lg"
           />
           <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
