@@ -57,40 +57,59 @@ const WalletAuth: React.FC<WalletAuthProps> = ({ onAuthenticated }) => {
         },
         body: JSON.stringify(formData),
       });
-if (!response.ok) {
-  const errorText = await response.text();
-  try {
-    // Try to parse error message as JSON
-    const errorData = JSON.parse(errorText);
-    throw new Error(errorData.message || "Authentication failed");
-  } catch (parseError) {
-    // If parsing fails, use the raw error text or a default message
-    throw new Error(errorText || "Authentication failed");
-  }
-}
-      const data: AuthResponse = await response.json();
 
+      // First check if response exists
+      if (!response) {
+        throw new Error("No response received from server");
+      }
+
+      // Read the response text first
+      const responseText = await response.text();
+
+      // Try to parse the response as JSON only if there's content
+      let data: AuthResponse;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError);
+        console.error("Raw Response:", responseText);
+        throw new Error(
+          `Invalid response format: ${responseText.slice(0, 100)}...`
+        );
+      }
+
+      // Handle non-OK responses
       if (!response.ok) {
-        throw new Error(data.message || "Authentication failed");
+        throw new Error(
+          data?.message ||
+            `Authentication failed with status ${response.status}`
+        );
+      }
+
+      // Validate the response data
+      if (!data || !data.token) {
+        throw new Error("Invalid response data: Missing required fields");
       }
 
       // Store token in cookie (expires in 7 days)
       setCookie("auth_token", data.token, 7);
 
       // Store user data in cookie if needed
-      setCookie(
-        "user_data",
-        JSON.stringify({
-          email: data.user.email,
-          username: data.user.username ,
-        }),
-        7
-      );
+      if (data.user) {
+        setCookie(
+          "user_data",
+          JSON.stringify({
+            email: data.user.email,
+            username: data.user.username,
+          }),
+          7
+        );
+      }
 
       onAuthenticated(true);
-          navigate("/dashboard");
-
+      navigate("/dashboard");
     } catch (err) {
+      console.error("Authentication Error:", err);
       if (err instanceof Error) {
         setError(err.message || "An error occurred. Please try again.");
       } else {
